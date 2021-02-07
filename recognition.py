@@ -3,7 +3,7 @@ import speech_recognition as sr
 import queue
 
 
-class VoiceManager:
+class VoiceTranslator:
     def __init__(self, language='pl'):
         self._r = sr.Recognizer()
         self._mic = sr.Microphone()
@@ -29,10 +29,19 @@ class VoiceManager:
             recognition_result = None
         return recognition_result
 
+    
+    def listen_and_translate_to_text(self):
+        self.listen()
+        return self._process_audio()
+
 
 if __name__=="__main__":
-    new_task = VoiceManager()
+    new_task = VoiceTranslator()
+    #print("start recording")
+    #new_task.listen()
+    #print("stop recording")
+    #print(*new_task.process_audios())
     print("start recording")
-    new_task.listen()
+    t = new_task.listen_and_translate_to_text()
     print("stop recording")
-    print(*new_task.process_audios())
+    print(t)
