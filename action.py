@@ -1,21 +1,33 @@
 
 class Action:
-    def __init__(self, fucntion, *args, **kwargs):
-        self.fucntion = fucntion
-        self.args = args
-        self.kwargs = kwargs
+    def __init__(self, function, *args, **kwargs):
+        self._function = function
+        self._args = args
+        self._kwargs = kwargs
 
     def execute(self):
-        self.fucntion(*self.args, **self.kwargs)
+        self._function(*self._args, **self._kwargs)
 
     def execute_and_return(self):
-        return self.fucntion(*self.args, **self.kwargs)
+        return self._function(*self._args, **self._kwargs)
 
     def __eq__(self, other) -> bool:
-        funciton_eq = self.fucntion==other.fucntion
-        args_eq = self.args==other.args
-        kwargs_eq = self.kwargs==other.kwargs
+        funciton_eq = self._function==other.function
+        args_eq = self._args==other.args
+        kwargs_eq = self._kwargs==other.kwargs
         return funciton_eq and args_eq and kwargs_eq
 
     def __str__(self):
-        return 'Action for ' + self.fucntion.__name__
+        return 'Action for ' + self._function.__name__
+
+    @property
+    def function(self):
+        return self._function
+    
+    @property
+    def args(self):
+        return self._args
+
+    @property
+    def kwargs(self):
+        return self._kwargs

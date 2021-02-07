@@ -1,18 +1,35 @@
+from os import access
 from ssl import SSL_ERROR_EOF
 from recognition import VoiceTranslator
-from ui import CommandUI, ConsoleUI
+from ui import BinderUI, ConsoleUI
 from action import Action
 
-class CommandMenager:
-    def __init__(self, voice_translator: VoiceTranslator, ui: CommandUI) -> None:
-        self.aliases = dict()
+
+class ActionBinder:
+    def __init__(self, voice_translator: VoiceTranslator, ui: BinderUI, aliases: dict()) -> None:
+        self.aliases = aliases
         self._current_alias = None
         self.translator = voice_translator
         self.ui = ui
+        self._saved_aliases_to_func = dict()
+        self._read_save()
 
-    def add_action(self, fucntion, *args, **kwargs):
+    def bind_action(self, fucntion, *args, **kwargs):
         action = Action(fucntion, *args, **kwargs)
-        self.ui.first_record()
+        action_func_name = action.function.__name__
+        if action_func_name in self._saved_aliases_to_func.values():
+            self._add_saved_actions(action)
+        else:
+            self._bind_new_action(action)
+
+    def _add_saved_actions(self, action: Action):
+        action_name = action.function.__name__
+        for alias, func_name in self._saved_aliases_to_func.items():
+            if func_name == action_name:
+                self.aliases[alias] = action
+
+    def _bind_new_action(self, action: Action):
+        self.ui.first_record(action.function.__name__)
         self._add_alias(action)
         self.ui.end_record()
         reminding_records = 2
@@ -20,23 +37,24 @@ class CommandMenager:
             self.ui.next_record(reminding_records)
             alias_status = self._add_alias(action)
             self.ui.end_record()
-            if alias_status == "new" or self._current_alias == None:
+            if alias_status == "new" or alias_status == 'undefined':
                 self.ui.cannot_recoginze_message()
                 reminding_records += 2
             elif alias_status == "old":
                 self.ui.recoginzed_succesly_message()
                 reminding_records -=1
         self.ui.action_added_message()
-            
+
     def _add_alias(self, action: Action):
-        self._add_current_alias()
+        self._set_current_alias()
         self._check_conflicts_with_other_actions(action)
         status = self._decide_if_alias_is_new()
-        self._bind_aliast_to_action(action)
+        self._bind_alias_to_action(action)
+        self._save_alias(action, status)
         self._clear_current_alias()
         return status
 
-    def _add_current_alias(self):
+    def _set_current_alias(self):
         alias = self.translator.listen_and_translate_to_text()
         self._current_alias = alias
 
@@ -50,99 +68,58 @@ class CommandMenager:
         alias = self._current_alias
         if alias in self.aliases:
             alias_status = "old"
+        elif alias == None:
+            alias_status = 'undefined'
         else:
             alias_status = "new"
         return alias_status
 
-    def _bind_aliast_to_action(self, action: Action):
+    def _bind_alias_to_action(self, action: Action):
         self.aliases[self._current_alias] = action
     
+    def _save_alias(self, action: Action, status):
+        if status == "new":
+            func_name = action.function.__name__
+            line = self._current_alias + ';' + func_name + "\n"
+            with open('save.txt', 'a') as f:
+                f.write(line)
+
     def _clear_current_alias(self):
         self._current_alias = ''
 
+    def _read_save(self):
+        with open('save.txt', 'r') as f:
+            for line in f:
+                alias, func_name = line.split(';')
+                self._saved_aliases_to_func[alias]=func_name.strip()
+                
 
-
+class ActionExecuter:
+    def __init__(self, translator: VoiceTranslator, aliases: dict) -> None:
+        self.aliases = aliases
+        self.translator = translator
+    
+    def _execute(alias):
+        pass
+    
 
 
 if __name__=="__main__":
-    def hello_world(kto_wita):
+    def hello_world(kto_wita, kwarg1, kwarg2):
         print("cześć świecie od", kto_wita)
 
-    #m = VoiceTranslator()
-    #c = VoiceCommand("test", m, hello_world, "martynka")
-    #c.set_aliases()
-    #print(c.aliases)
-    pass
+    def goodbye_world():
+        print("its time")    
+
+
+    aliases = dict()
     vt = VoiceTranslator()
     ui = ConsoleUI()
-    cm = CommandMenager(vt, ui)
-    cm.add_action(hello_world)
+    cm = ActionBinder(vt, ui, aliases)
+    cm.bind_action(hello_world, 'Martyna', kwarg1 = 1, kwarg2 = 2)
+    cm.bind_action(goodbye_world)
+    #saver = ActionStreamer(aliases)
+    #saver.save()
+
     print(cm.aliases)
 
-
-
-"""
-
-class Command:
-    def __init__(self, fucntion, *args):
-        self.fucntion = fucntion
-        self.action_args = args
-
-    def execute(self):
-        self.fucntion(*self.action_args)
-
-    def execute_and_return(self):
-        return self.fucntion(*self.action_args)
-
-    def __str__(self):
-        return 'command for ' + self.fucntion.__name__
-
-
-class VoiceCommand(Command):
-    def __init__(self, name, voice_translator, fucntion, *args, **kwargs) -> None:
-        super().__init__(name, fucntion, *args)
-        self._aliases = CommandAliases()
-        self._voice_translator = voice_translator
-
-        self._start_record_notification = self._default_start_notification
-        self._end_record_notification = self._default_end_notification
-
-    def record(self):
-        alias = self._voice_translator.listen_and_translate_to_text()
-        self._aliases.add_alias(alias)
-
-    def record_few_times(self, repeats):
-        pass
-
-    def record_until_no_new_aliases(self):
-        pass
-
-    def _default_start_notification(self):
-        print("Record starting, please wait 2-3 sec and talk.")
-
-    def _default_end_notification(self):
-        print("Record end.")
-
-    def _new_alias_notification(self):
-        print("I processed your voice ")
-
-
-    #@sound_effect
-
-
-
-
-class CommandAliases:
-    def __init__(self) -> None:
-        self.aliases = set()
-
-    def add_alias(self, alias):
-        if len(self.aliases) >= 10:
-            warnings.warn(f"Generated {len(self.aliases)} diffrent aliases for this command. Maybe clean those, and try to choose easier command")
-        self.aliases.append(alias)
-
-    def is_new_alias(self, alias):
-        return alias not in self.aliases
-
-    def delete_all(self):
-        self.aliases = []"""

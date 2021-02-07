@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 
 
-class CommandUI(ABC):
+class BinderUI(ABC):
     @abstractmethod
-    def first_record(self) -> None:
+    def first_record(self, function_name) -> None:
         pass
 
     @abstractmethod
@@ -27,9 +27,9 @@ class CommandUI(ABC):
         pass
 
 
-class ConsoleUI(CommandUI):
-    def first_record(self):
-        print("Your command record is starting. Please wait 2-3 secound and talk.")
+class ConsoleUI(BinderUI):
+    def first_record(self, funtion_name):
+        print(f"Your command record for {funtion_name} is starting. Please wait 2-3 secound and talk.")
     
     def next_record(self, reminding_records) -> None:
         print(f'You still have to record {reminding_records} times.')
