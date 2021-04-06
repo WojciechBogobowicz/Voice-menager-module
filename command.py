@@ -6,44 +6,49 @@ from action import Action
 
 
 class ActionBinder:
-    def __init__(self, voice_translator: VoiceTranslator, ui: BinderUI, aliases: dict()) -> None:
+    def __init__(self, voice_translator: VoiceTranslator, aliases: dict()) -> None:
         self.aliases = aliases
         self._current_alias = None
         self.translator = voice_translator
-        self.ui = ui
         self._saved_aliases_to_func = dict()
         self._read_save()
 
-    def bind_action(self, fucntion, *args, **kwargs):
-        action = Action(fucntion, *args, **kwargs)
-        action_func_name = action.function.__name__
+    def bind_action(self, ui: BinderUI, func, *args, **kwargs):
+        action = Action(func, *args, **kwargs)
+        action_func_name = action.func.__name__
         if action_func_name in self._saved_aliases_to_func.values():
             self._add_saved_actions(action)
         else:
-            self._bind_new_action(action)
+            self._bind_new_action(action, ui)
+        
+    def bind_action_mannualy(self, aliases: tuple, func, *args, **kwargs):
+        action = Action(func, *args, **kwargs)
+        for alias in aliases:
+            self.aliases[alias] = action
 
     def _add_saved_actions(self, action: Action):
-        action_name = action.function.__name__
+        action_name = action.func.__name__
         for alias, func_name in self._saved_aliases_to_func.items():
             if func_name == action_name:
                 self.aliases[alias] = action
+            
 
-    def _bind_new_action(self, action: Action):
-        self.ui.first_record(action.function.__name__)
+    def _bind_new_action(self, action: Action, ui: BinderUI):
+        ui.first_record(action.func.__name__)
         self._add_alias(action)
-        self.ui.end_record()
+        ui.end_record()
         reminding_records = 2
         while reminding_records > 0:
-            self.ui.next_record(reminding_records)
+            ui.next_record(reminding_records)
             alias_status = self._add_alias(action)
-            self.ui.end_record()
+            ui.end_record()
             if alias_status == "new" or alias_status == 'undefined':
-                self.ui.cannot_recoginze_message()
+                ui.cannot_recoginze_message()
                 reminding_records += 2
             elif alias_status == "old":
-                self.ui.recoginzed_succesly_message()
+                ui.recoginzed_succesly_message()
                 reminding_records -=1
-        self.ui.action_added_message()
+        ui.action_added_message()
 
     def _add_alias(self, action: Action):
         self._set_current_alias()
@@ -79,7 +84,7 @@ class ActionBinder:
     
     def _save_alias(self, action: Action, status):
         if status == "new":
-            func_name = action.function.__name__
+            func_name = action.func.__name__
             line = self._current_alias + ';' + func_name + "\n"
             with open('save.txt', 'a') as f:
                 f.write(line)
@@ -92,15 +97,10 @@ class ActionBinder:
             for line in f:
                 alias, func_name = line.split(';')
                 self._saved_aliases_to_func[alias]=func_name.strip()
+
+    
                 
 
-class ActionExecuter:
-    def __init__(self, translator: VoiceTranslator, aliases: dict) -> None:
-        self.aliases = aliases
-        self.translator = translator
-    
-    def _execute(alias):
-        pass
     
 
 
@@ -115,11 +115,10 @@ if __name__=="__main__":
     aliases = dict()
     vt = VoiceTranslator()
     ui = ConsoleUI()
-    cm = ActionBinder(vt, ui, aliases)
-    cm.bind_action(hello_world, 'Martyna', kwarg1 = 1, kwarg2 = 2)
-    cm.bind_action(goodbye_world)
-    #saver = ActionStreamer(aliases)
-    #saver.save()
+    cm = ActionBinder(vt, aliases)
+    cm.bind_action(ui, hello_world, 'Martyna', kwarg1 = 1, kwarg2 = 2)
+    cm.bind_action(ui, goodbye_world)
+    
 
     print(cm.aliases)
 
