@@ -9,7 +9,8 @@ Głównymi załozeniami projektu są:
 Możesz wykorzystać ten moduł np do tworzenia smart domu.  
 Rozpoznawanie mowy jest realizowane przy pomocy Google Translate, więc program wymaga stałego dotępu do internetu, żeby działał.  
 Wszystkie komendy które program ma rozpoznawać powinny być dodane funkcją bind_action z klasy VoiceMenger, zanim rozpocznie się nasłuchiwanie. Jeśli program napotka na nowo zbindowaną funkcję to poprosi o kilkukrotne powtórzenie słownej komendy która powinna ją wywoływać. Funkcje do których już raz przypisno komendy, będą z nich korzystały przy kolejnych uruchomieniach bez konieczności pownego ich bindowania.  
-UI dodawania komend jest klasą abstrakcyjną, więc uzytkownik może zdefiniować sobie swoją własną wersję.
+UI dodawania komend jest klasą abstrakcyjną, więc uzytkownik może zdefiniować sobie swoją własną wersję.  
+W pliku fucntions.py znadjuje się parę prostych przykładów funkcji które można przypisać do komend, takich jak poproszenie programu o podanie aktualnej godziny, albo włączenie/wyłączenie światła sterowanego przez adruino podłączonego do komputera portem szeregowym.
 
 --------------------------------------
 
